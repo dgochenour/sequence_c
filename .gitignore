@@ -1,0 +1,12 @@
+.vscode
+objs/
+
+# don't track generated type-support files
+example.c
+example.h
+examplePlugin.*
+exampleSupport.*
+
+#don't track generated README nor makefile
+makefile*
+README_*
