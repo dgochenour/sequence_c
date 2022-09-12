@@ -1,0 +1,7 @@
+const long MAX_SEQUENCE_LEN = 1024;
+
+struct MyType {
+
+    @key long id;
+    sequence<char, MAX_SEQUENCE_LEN> msg;
+};
