@@ -42,6 +42,8 @@ add and remove them dynamically from the domain.
 #include "example.h"
 #include "exampleSupport.h"
 
+//#define USE_BUILTIN_PRETTY_PRINT
+
 void MyTypeListener_on_requested_deadline_missed(
     void* listener_data,
     DDS_DataReader* reader,
@@ -114,8 +116,24 @@ void MyTypeListener_on_data_available(
     for (i = 0; i < MyTypeSeq_get_length(&data_seq); ++i) {
         if (DDS_SampleInfoSeq_get_reference(&info_seq, i)->valid_data) {
             printf("Received data\n");
+
+#ifdef USE_BUILTIN_PRETTY_PRINT
             MyTypeTypeSupport_print_data(
                 MyTypeSeq_get_reference(&data_seq, i));
+#else
+            // The call to MyTypeSeq_get_reference() below returns a pointer to 
+            // the sample [i]. Note the name of "MyType" (our user-created type)
+            // in the function name. We can then reference the sample members 
+            // (i.e. "id" and "msg").
+            printf("\tid = %d\n", MyTypeSeq_get_reference(&data_seq, i)->id);
+            // The "msg" sample member is a sequence of variable length, so we 
+            // need to iterate throught this CharSeq. In this example, we'll 
+            // simply print ouf each value.
+            for (int j = 0; j < DDS_CharSeq_get_length(&MyTypeSeq_get_reference(&data_seq, i)->msg); j++) {
+                char c = *DDS_CharSeq_get_reference(&MyTypeSeq_get_reference(&data_seq, i)->msg, j);
+                printf("\tmsg[%d] = %c\n", j, c);
+            }
+#endif
         }
     }
 
