@@ -42,6 +42,8 @@ add and remove them dynamically from the domain.
 #include "example.h"
 #include "exampleSupport.h"
 
+#define CHARS_IN_ALPHABET 26
+
 /* Delete all entities */
 static int publisher_shutdown(
     DDS_DomainParticipant *participant)
@@ -91,7 +93,7 @@ int publisher_main(int domainId, int sample_count)
     DDS_InstanceHandle_t instance_handle = DDS_HANDLE_NIL;
     const char *type_name = NULL;
     int count = 0;  
-    struct DDS_Duration_t send_period = {4,0};
+    struct DDS_Duration_t send_period = {1,0};
 
     /* To customize participant QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
@@ -162,23 +164,30 @@ int publisher_main(int domainId, int sample_count)
         return -1;
     }
 
-    /* For a data type that has a key, if the same instance is going to be
-    written multiple times, initialize the key here
-    and register the keyed instance prior to writing */
-    /*
-    instance_handle = MyTypeDataWriter_register_instance(
-        MyType_writer, instance);
-    */
-    /* Main loop */
+    instance->id = 100; // arbitrary number for ID... just to have something
+    instance_handle = MyTypeDataWriter_register_instance(MyType_writer, instance);
+
+
     for (count=0; (sample_count == 0) || (count < sample_count); ++count) {
 
         printf("Writing MyType, count %d\n", count);
 
-        /* Modify the data to be written here */
+        // When using the C API, we need to explicitly give the sequence some 
+        // length. Other more modern APIs (C++11, C#) can dynamically size as 
+        // elements are pushed in.
+        //
+        // In this example, we're changing the length every loop iteration, 
+        // simply to demonstrate that you can.
+        short sequence_length = (count % MAX_SEQUENCE_LEN) + 1;
+        DDS_CharSeq_set_length(&instance->msg, sequence_length);
+
+        // Fill the sequence with some characters
+        for (int i = 0; i < sequence_length; ++i) {
+            *DDS_CharSeq_get_reference(&instance->msg, i) = (i % CHARS_IN_ALPHABET + (int)'A');
+        }
 
         /* Write data */
-        retcode = MyTypeDataWriter_write(
-            MyType_writer, instance, &instance_handle);
+        retcode = MyTypeDataWriter_write(MyType_writer, instance, &instance_handle);
         if (retcode != DDS_RETCODE_OK) {
             fprintf(stderr, "write error %d\n", retcode);
         }
