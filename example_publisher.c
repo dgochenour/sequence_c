@@ -181,7 +181,9 @@ int publisher_main(int domainId, int sample_count)
         short sequence_length = (count % MAX_SEQUENCE_LEN) + 1;
         DDS_CharSeq_set_length(&instance->msg, sequence_length);
 
-        // Fill the sequence with some characters
+        // Fill the sequence with some characters. Using the C API, we can call
+        // the type-specific DDS_<type>Seq_get_reference() function to return a 
+        // reference to a specific element in the sequence.
         for (int i = 0; i < sequence_length; ++i) {
             *DDS_CharSeq_get_reference(&instance->msg, i) = (i % CHARS_IN_ALPHABET + (int)'A');
         }
